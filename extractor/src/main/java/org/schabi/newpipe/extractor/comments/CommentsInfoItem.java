@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 public class CommentsInfoItem extends InfoItem {
 
     private String commentId;
-    private Description commentText;
+    private String commentText;
     private String uploaderName;
     private String uploaderAvatarUrl;
     private String uploaderUrl;
@@ -44,11 +44,11 @@ public class CommentsInfoItem extends InfoItem {
         this.commentId = commentId;
     }
 
-    public Description getCommentText() {
+    public String getCommentText() {
         return commentText;
     }
 
-    public void setCommentText(final Description commentText) {
+    public void setCommentText(final String commentText) {
         this.commentText = commentText;
     }
 
