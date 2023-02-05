@@ -6,17 +6,14 @@
       "Origin": [
         "https://www.youtube.com"
       ],
-      "Cookie": [
-        "CONSENT\u003dPENDING+264"
+      "X-YouTube-Client-Name": [
+        "1"
       ],
       "Referer": [
         "https://www.youtube.com"
       ],
       "X-YouTube-Client-Version": [
-        "2.20221118.01.00"
-      ],
-      "X-YouTube-Client-Name": [
-        "1"
+        "2.20220809.02.00"
       ],
       "Content-Type": [
         "application/json"
@@ -34,6 +31,13 @@
       34,
       58,
       34,
+      82,
+      54,
+      86,
+      103,
+      82,
+      102,
+      72,
       98,
       73,
       84,
@@ -43,13 +47,6 @@
       57,
       65,
       78,
-      87,
-      76,
-      80,
-      106,
-      122,
-      106,
-      72,
       34,
       44,
       34,
@@ -199,9 +196,9 @@
       34,
       49,
       57,
-      51,
+      50,
       49,
-      51,
+      53,
       34,
       125,
       125,
@@ -528,10 +525,19 @@
         "application/json; charset\u003dUTF-8"
       ],
       "date": [
-        "Tue, 22 Nov 2022 10:41:29 GMT"
+        "Fri, 12 Aug 2022 17:15:57 GMT"
+      ],
+      "expires": [
+        "Fri, 12 Aug 2022 17:15:57 GMT"
+      ],
+      "p3p": [
+        "CP\u003d\"This is not a P3P policy! See g.co/p3phelp for more info.\""
       ],
       "server": [
         "scaffolding on HTTPServer2"
+      ],
+      "set-cookie": [
+        "CONSENT\u003dPENDING+244; expires\u003dSun, 11-Aug-2024 17:15:57 GMT; path\u003d/; domain\u003d.youtube.com; Secure"
       ],
       "vary": [
         "Origin",
@@ -548,7 +554,7 @@
         "0"
       ]
     },
-    "responseBody": "{\"responseContext\":{\"visitorData\":\"CgtKQl8wN010NHE2VSjZzvKbBg%3D%3D\"},\"playabilityStatus\":{\"status\":\"UNPLAYABLE\",\"reason\":\"This video is unavailable\",\"messages\":[\"This is a private video. Please sign in to verify that you may see it.\"]},\"trackingParams\":\"CAAQu2kiEwjzgrqEzcH7AhXzxxEIHXWWCJk\u003d\"}",
+    "responseBody": "{\"responseContext\":{\"visitorData\":\"CgtEUGRXZE56WjVuVSjNldqXBg%3D%3D\"},\"playabilityStatus\":{\"status\":\"UNPLAYABLE\",\"reason\":\"This video is unavailable\",\"messages\":[\"This is a private video. Please sign in to verify that you may see it.\"]},\"trackingParams\":\"CAAQu2kiEwiimdr75sH5AhXHUrIKHYJjCE0\u003d\"}",
     "latestUrl": "https://www.youtube.com/youtubei/v1/player?key\u003dAIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8\u0026prettyPrint\u003dfalse"
   }
 }

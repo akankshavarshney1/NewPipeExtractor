@@ -3,7 +3,6 @@ package org.schabi.newpipe.extractor.comments;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.Page;
 import org.schabi.newpipe.extractor.localization.DateWrapper;
-import org.schabi.newpipe.extractor.stream.Description;
 
 import javax.annotation.Nullable;
 

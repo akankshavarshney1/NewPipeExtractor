@@ -3,7 +3,6 @@ package org.schabi.newpipe.extractor.services.bandcamp.extractors;
 import org.jsoup.nodes.Element;
 import org.schabi.newpipe.extractor.comments.CommentsInfoItemExtractor;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
-import org.schabi.newpipe.extractor.stream.Description;
 
 import java.util.Objects;
 
@@ -19,7 +18,7 @@ public class BandcampCommentsInfoItemExtractor implements CommentsInfoItemExtrac
 
     @Override
     public String getName() throws ParsingException {
-        return getCommentText().getContent();
+        return getCommentText();
     }
 
     @Override
@@ -33,14 +32,12 @@ public class BandcampCommentsInfoItemExtractor implements CommentsInfoItemExtrac
     }
 
     @Override
-    public Description getCommentText() throws ParsingException {
-        final var text = writing.getElementsByClass("text").stream()
+    public String getCommentText() throws ParsingException {
+        return writing.getElementsByClass("text").stream()
                 .filter(Objects::nonNull)
                 .map(Element::ownText)
                 .findFirst()
                 .orElseThrow(() -> new ParsingException("Could not get comment text"));
-
-        return new Description(text, Description.PLAIN_TEXT);
     }
 
     @Override

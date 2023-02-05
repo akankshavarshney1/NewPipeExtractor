@@ -5,7 +5,6 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItemExtractor;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.localization.DateWrapper;
 import org.schabi.newpipe.extractor.services.soundcloud.SoundcloudParsingHelper;
-import org.schabi.newpipe.extractor.stream.Description;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -25,8 +24,8 @@ public class SoundcloudCommentsInfoItemExtractor implements CommentsInfoItemExtr
     }
 
     @Override
-    public Description getCommentText() {
-        return new Description(json.getString("body"), Description.PLAIN_TEXT);
+    public String getCommentText() {
+        return json.getString("body");
     }
 
     @Override

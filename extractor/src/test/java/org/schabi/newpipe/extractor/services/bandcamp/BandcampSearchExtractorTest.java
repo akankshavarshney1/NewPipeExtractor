@@ -2,18 +2,10 @@
 
 package org.schabi.newpipe.extractor.services.bandcamp;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.schabi.newpipe.extractor.ServiceList.Bandcamp;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.schabi.newpipe.downloader.DownloaderTestImpl;
-import org.schabi.newpipe.extractor.InfoItem;
-import org.schabi.newpipe.extractor.ListExtractor;
-import org.schabi.newpipe.extractor.NewPipe;
-import org.schabi.newpipe.extractor.Page;
-import org.schabi.newpipe.extractor.StreamingService;
+import org.schabi.newpipe.extractor.*;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
@@ -21,9 +13,12 @@ import org.schabi.newpipe.extractor.services.DefaultSearchExtractorTest;
 import org.schabi.newpipe.extractor.services.bandcamp.extractors.BandcampSearchExtractor;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
-import javax.annotation.Nullable;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.schabi.newpipe.extractor.ServiceList.Bandcamp;
 
 /**
  * Test for {@link BandcampSearchExtractor}
@@ -78,17 +73,20 @@ public class BandcampSearchExtractorTest {
     @Test
     void testAlbumSearch() throws ExtractionException, IOException {
         final SearchExtractor extractor = Bandcamp.getSearchExtractor("minecraft volume alpha");
-        final InfoItem minecraft = extractor.getInitialPage().getItems().get(0);
+        InfoItem minecraft = extractor.getInitialPage()
+                .getItems().get(0);
 
         // Minecraft volume alpha should be the first result, no?
-        assertEquals("Minecraft - Volume Alpha", minecraft.getName());
+        assertEquals("Minecraft: Volume Alpha (cover)", minecraft.getName());
         assertTrue(minecraft.getThumbnailUrl().endsWith(".jpg"));
         assertTrue(minecraft.getThumbnailUrl().contains("f4.bcbits.com/img/"));
-        assertEquals("https://c418.bandcamp.com/album/minecraft-volume-alpha",
+        assertEquals(
+                "https://chromacat248.bandcamp.com/album/minecraft-volume-alpha-cover",
                 minecraft.getUrl());
 
         // Verify that playlist tracks counts get extracted correctly
-        assertEquals(24, ((PlaylistInfoItem) minecraft).getStreamCount());
+        assertEquals(3, ((PlaylistInfoItem) minecraft).getStreamCount());
+
     }
 
     /**

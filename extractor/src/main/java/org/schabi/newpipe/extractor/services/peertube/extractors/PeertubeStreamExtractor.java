@@ -1,6 +1,7 @@
 package org.schabi.newpipe.extractor.services.peertube.extractors;
 
 import static org.schabi.newpipe.extractor.stream.AudioStream.UNKNOWN_BITRATE;
+import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 
 import com.grack.nanojson.JsonArray;
@@ -35,6 +36,7 @@ import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -60,8 +62,6 @@ public class PeertubeStreamExtractor extends StreamExtractor {
     private final List<SubtitlesStream> subtitles = new ArrayList<>();
     private final List<AudioStream> audioStreams = new ArrayList<>();
     private final List<VideoStream> videoStreams = new ArrayList<>();
-
-    private ParsingException subtitlesException = null;
 
     public PeertubeStreamExtractor(final StreamingService service, final LinkHandler linkHandler)
             throws ParsingException {
@@ -264,19 +264,13 @@ public class PeertubeStreamExtractor extends StreamExtractor {
 
     @Nonnull
     @Override
-    public List<SubtitlesStream> getSubtitlesDefault() throws ParsingException {
-        if (subtitlesException != null) {
-            throw subtitlesException;
-        }
+    public List<SubtitlesStream> getSubtitlesDefault() {
         return subtitles;
     }
 
     @Nonnull
     @Override
-    public List<SubtitlesStream> getSubtitles(final MediaFormat format) throws ParsingException {
-        if (subtitlesException != null) {
-            throw subtitlesException;
-        }
+    public List<SubtitlesStream> getSubtitles(final MediaFormat format) {
         return subtitles.stream()
                 .filter(sub -> sub.getFormat() == format)
                 .collect(Collectors.toList());
@@ -329,11 +323,12 @@ public class PeertubeStreamExtractor extends StreamExtractor {
     @Nonnull
     private String getRelatedItemsUrl(@Nonnull final List<String> tags)
             throws UnsupportedEncodingException {
-        final String url = baseUrl + PeertubeSearchQueryHandlerFactory.SEARCH_ENDPOINT_VIDEOS;
+        final String url = baseUrl + PeertubeSearchQueryHandlerFactory.SEARCH_ENDPOINT;
         final StringBuilder params = new StringBuilder();
         params.append("start=0&count=8&sort=-createdAt");
         for (final String tag : tags) {
-            params.append("&tagsOneOf=").append(Utils.encodeUrlUtf8(tag));
+            params.append("&tagsOneOf=");
+            params.append(URLEncoder.encode(tag, UTF_8));
         }
         return url + "?" + params;
     }
@@ -428,8 +423,8 @@ public class PeertubeStreamExtractor extends StreamExtractor {
                         }
                     }
                 }
-            } catch (final Exception e) {
-                subtitlesException = new ParsingException("Could not get subtitles", e);
+            } catch (final Exception ignored) {
+                // Ignore all exceptions
             }
         }
     }

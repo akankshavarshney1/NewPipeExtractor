@@ -1,8 +1,17 @@
 package org.schabi.newpipe.extractor.services.youtube.extractors;
 
-import com.grack.nanojson.JsonArray;
-import com.grack.nanojson.JsonObject;
-import com.grack.nanojson.JsonWriter;
+import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getJsonPostResponse;
+import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.prepareDesktopJsonBuilder;
+import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
+import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.schabi.newpipe.extractor.Page;
 import org.schabi.newpipe.extractor.StreamingService;
@@ -15,31 +24,26 @@ import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler;
 import org.schabi.newpipe.extractor.localization.Localization;
 import org.schabi.newpipe.extractor.utils.JsonUtils;
-import org.schabi.newpipe.extractor.utils.Utils;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getJsonPostResponse;
-import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getTextFromObject;
-import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.prepareDesktopJsonBuilder;
-import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
-import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
+import com.grack.nanojson.JsonArray;
+import com.grack.nanojson.JsonObject;
+import com.grack.nanojson.JsonWriter;
 
 public class YoutubeCommentsExtractor extends CommentsExtractor {
 
-    /**
-     * Whether comments are disabled on video.
-     */
-    private boolean commentsDisabled;
+    private JsonObject nextResponse;
 
     /**
-     * The second ajax <b>/next</b> response.
+     * Caching mechanism and holder of the commentsDisabled value.
+     * <br/>
+     * Initial value = empty -> unknown if comments are disabled or not<br/>
+     * Some method calls {@link #findInitialCommentsToken()}
+     * -> value is set<br/>
+     * If the method or another one that is depending on disabled comments
+     * is now called again, the method execution can avoid unnecessary calls
      */
-    private JsonObject ajaxJson;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private Optional<Boolean> optCommentsDisabled = Optional.empty();
 
     public YoutubeCommentsExtractor(
             final StreamingService service,
@@ -52,25 +56,32 @@ public class YoutubeCommentsExtractor extends CommentsExtractor {
     public InfoItemsPage<CommentsInfoItem> getInitialPage()
             throws IOException, ExtractionException {
 
-        if (commentsDisabled) {
+        // Check if findInitialCommentsToken was already called and optCommentsDisabled initialized
+        if (optCommentsDisabled.orElse(false)) {
             return getInfoItemsPageForDisabledComments();
         }
 
-        return extractComments(ajaxJson);
+        // Get the token
+        final String commentsToken = findInitialCommentsToken();
+        // Check if the comments have been disabled
+        if (optCommentsDisabled.get()) {
+            return getInfoItemsPageForDisabledComments();
+        }
+
+        return getPage(getNextPage(commentsToken));
     }
 
     /**
      * Finds the initial comments token and initializes commentsDisabled.
      * <br/>
-     * Also sets {@link #commentsDisabled}.
+     * Also sets {@link #optCommentsDisabled}.
      *
      * @return the continuation token or null if none was found
      */
     @Nullable
-    private String findInitialCommentsToken(final JsonObject nextResponse)
-            throws ExtractionException {
+    private String findInitialCommentsToken() throws ExtractionException {
         final String token = JsonUtils.getArray(nextResponse,
-                        "contents.twoColumnWatchNextResults.results.results.contents")
+                "contents.twoColumnWatchNextResults.results.results.contents")
                 .stream()
                 // Only use JsonObjects
                 .filter(JsonObject.class::isInstance)
@@ -101,7 +112,7 @@ public class YoutubeCommentsExtractor extends CommentsExtractor {
                 .orElse(null);
 
         // The comments are disabled if we couldn't get a token
-        commentsDisabled = token == null;
+        optCommentsDisabled = Optional.of(token == null);
 
         return token;
     }
@@ -112,9 +123,9 @@ public class YoutubeCommentsExtractor extends CommentsExtractor {
     }
 
     @Nullable
-    private Page getNextPage(@Nonnull final JsonObject jsonObject) throws ExtractionException {
+    private Page getNextPage(@Nonnull final JsonObject ajaxJson) throws ExtractionException {
         final JsonArray onResponseReceivedEndpoints =
-                jsonObject.getArray("onResponseReceivedEndpoints");
+                ajaxJson.getArray("onResponseReceivedEndpoints");
 
         // Prevent ArrayIndexOutOfBoundsException
         if (onResponseReceivedEndpoints.isEmpty()) {
@@ -162,43 +173,33 @@ public class YoutubeCommentsExtractor extends CommentsExtractor {
     @Override
     public InfoItemsPage<CommentsInfoItem> getPage(final Page page)
             throws IOException, ExtractionException {
-
-        if (commentsDisabled) {
+        if (optCommentsDisabled.orElse(false)) {
             return getInfoItemsPageForDisabledComments();
         }
-
         if (page == null || isNullOrEmpty(page.getId())) {
             throw new IllegalArgumentException("Page doesn't have the continuation.");
         }
 
         final Localization localization = getExtractorLocalization();
-        // @formatter:off
         final byte[] body = JsonWriter.string(
                 prepareDesktopJsonBuilder(localization, getExtractorContentCountry())
                     .value("continuation", page.getId())
                     .done())
                 .getBytes(UTF_8);
-        // @formatter:on
 
-        final JsonObject jsonObject = getJsonPostResponse("next", body, localization);
+        final JsonObject ajaxJson = getJsonPostResponse("next", body, localization);
 
-        return extractComments(jsonObject);
-    }
-
-    private InfoItemsPage<CommentsInfoItem> extractComments(final JsonObject jsonObject)
-            throws ExtractionException {
         final CommentsInfoItemsCollector collector = new CommentsInfoItemsCollector(
                 getServiceId());
-        collectCommentsFrom(collector, jsonObject);
-        return new InfoItemsPage<>(collector, getNextPage(jsonObject));
+        collectCommentsFrom(collector, ajaxJson);
+        return new InfoItemsPage<>(collector, getNextPage(ajaxJson));
     }
 
     private void collectCommentsFrom(final CommentsInfoItemsCollector collector,
-                                     final JsonObject jsonObject)
-            throws ParsingException {
+                                     @Nonnull final JsonObject ajaxJson) throws ParsingException {
 
         final JsonArray onResponseReceivedEndpoints =
-                jsonObject.getArray("onResponseReceivedEndpoints");
+                ajaxJson.getArray("onResponseReceivedEndpoints");
         // Prevent ArrayIndexOutOfBoundsException
         if (onResponseReceivedEndpoints.isEmpty()) {
             return;
@@ -253,59 +254,24 @@ public class YoutubeCommentsExtractor extends CommentsExtractor {
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
         final Localization localization = getExtractorLocalization();
-        // @formatter:off
         final byte[] body = JsonWriter.string(
                 prepareDesktopJsonBuilder(localization, getExtractorContentCountry())
                     .value("videoId", getId())
                     .done())
                 .getBytes(UTF_8);
-        // @formatter:on
 
-        final String initialToken =
-                findInitialCommentsToken(getJsonPostResponse("next", body, localization));
-
-        if (initialToken == null) {
-            return;
-        }
-
-        // @formatter:off
-        final byte[] ajaxBody = JsonWriter.string(
-                        prepareDesktopJsonBuilder(localization, getExtractorContentCountry())
-                                .value("continuation", initialToken)
-                                .done())
-                .getBytes(UTF_8);
-        // @formatter:on
-
-        ajaxJson = getJsonPostResponse("next", ajaxBody, localization);
+        nextResponse = getJsonPostResponse("next", body, localization);
     }
 
 
     @Override
-    public boolean isCommentsDisabled() {
-        return commentsDisabled;
-    }
-
-    @Override
-    public int getCommentsCount() throws ExtractionException {
-        assertPageFetched();
-
-        if (commentsDisabled) {
-            return -1;
+    public boolean isCommentsDisabled() throws ExtractionException {
+        // Check if commentsDisabled has to be initialized
+        if (!optCommentsDisabled.isPresent()) {
+            // Initialize commentsDisabled
+            this.findInitialCommentsToken();
         }
 
-        final JsonObject countText = ajaxJson
-                .getArray("onResponseReceivedEndpoints").getObject(0)
-                .getObject("reloadContinuationItemsCommand")
-                .getArray("continuationItems").getObject(0)
-                .getObject("commentsHeaderRenderer")
-                .getObject("countText");
-
-        try {
-            return Integer.parseInt(
-                    Utils.removeNonDigitCharacters(getTextFromObject(countText))
-            );
-        } catch (final Exception e) {
-            throw new ExtractionException("Unable to get comments count", e);
-        }
+        return optCommentsDisabled.get();
     }
 }

@@ -4,6 +4,7 @@ import static org.schabi.newpipe.extractor.services.soundcloud.SoundcloudParsing
 import static org.schabi.newpipe.extractor.services.soundcloud.SoundcloudParsingHelper.clientId;
 import static org.schabi.newpipe.extractor.stream.AudioStream.UNKNOWN_BITRATE;
 import static org.schabi.newpipe.extractor.stream.Stream.ID_UNKNOWN;
+import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 
 import com.grack.nanojson.JsonArray;
@@ -31,10 +32,10 @@ import org.schabi.newpipe.extractor.stream.StreamExtractor;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemsCollector;
 import org.schabi.newpipe.extractor.stream.StreamType;
 import org.schabi.newpipe.extractor.stream.VideoStream;
-import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -133,7 +134,7 @@ public class SoundcloudStreamExtractor extends StreamExtractor {
 
     @Override
     public long getLikeCount() {
-        return track.getLong("likes_count", -1);
+        return track.getLong("favoritings_count", -1);
     }
 
     @Nonnull
@@ -319,7 +320,7 @@ public class SoundcloudStreamExtractor extends StreamExtractor {
 
     private static String urlEncode(final String value) {
         try {
-            return Utils.encodeUrlUtf8(value);
+            return URLEncoder.encode(value, UTF_8);
         } catch (final UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }

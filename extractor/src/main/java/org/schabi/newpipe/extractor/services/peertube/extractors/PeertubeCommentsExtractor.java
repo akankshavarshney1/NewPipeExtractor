@@ -26,12 +26,6 @@ import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 import javax.annotation.Nonnull;
 
 public class PeertubeCommentsExtractor extends CommentsExtractor {
-
-    /**
-     * Use {@link #isReply()} to access this variable.
-     */
-    private Boolean isReply = null;
-
     public PeertubeCommentsExtractor(final StreamingService service,
                                      final ListLinkHandler uiHandler) {
         super(service, uiHandler);
@@ -41,46 +35,17 @@ public class PeertubeCommentsExtractor extends CommentsExtractor {
     @Override
     public InfoItemsPage<CommentsInfoItem> getInitialPage()
             throws IOException, ExtractionException {
-        if (isReply()) {
-            return getPage(new Page(getOriginalUrl()));
-        } else {
-            return getPage(new Page(getUrl() + "?" + START_KEY + "=0&"
-                    + COUNT_KEY + "=" + ITEMS_PER_PAGE));
-        }
+        return getPage(new Page(getUrl() + "?" + START_KEY + "=0&"
+                + COUNT_KEY + "=" + ITEMS_PER_PAGE));
     }
 
-    private boolean isReply() throws ParsingException {
-        if (isReply == null) {
-            if (getOriginalUrl().contains("/videos/watch/")) {
-                isReply = false;
-            } else {
-                isReply = getOriginalUrl().contains("/comment-threads/");
-            }
-        }
-        return isReply;
-    }
-
-    private void collectCommentsFrom(@Nonnull final CommentsInfoItemsCollector collector,
-                                     @Nonnull final JsonObject json) throws ParsingException {
+    private void collectCommentsFrom(final CommentsInfoItemsCollector collector,
+                                     final JsonObject json) throws ParsingException {
         final JsonArray contents = json.getArray("data");
 
         for (final Object c : contents) {
             if (c instanceof JsonObject) {
                 final JsonObject item = (JsonObject) c;
-                if (!item.getBoolean("isDeleted")) {
-                    collector.commit(new PeertubeCommentsInfoItemExtractor(item, this));
-                }
-            }
-        }
-    }
-
-    private void collectRepliesFrom(@Nonnull final CommentsInfoItemsCollector collector,
-                                    @Nonnull final JsonObject json) throws ParsingException {
-        final JsonArray contents = json.getArray("children");
-
-        for (final Object c : contents) {
-            if (c instanceof JsonObject) {
-                final JsonObject item = ((JsonObject) c).getObject("comment");
                 if (!item.getBoolean("isDeleted")) {
                     collector.commit(new PeertubeCommentsInfoItemExtractor(item, this));
                 }
@@ -108,17 +73,11 @@ public class PeertubeCommentsExtractor extends CommentsExtractor {
 
         if (json != null) {
             PeertubeParsingHelper.validate(json);
-            final long total;
+            final long total = json.getLong("total");
+
             final CommentsInfoItemsCollector collector
                     = new CommentsInfoItemsCollector(getServiceId());
-
-            if (isReply() || json.has("children")) {
-                total = json.getArray("children").size();
-                collectRepliesFrom(collector, json);
-            } else {
-                total = json.getLong("total");
-                collectCommentsFrom(collector, json);
-            }
+            collectCommentsFrom(collector, json);
 
             return new InfoItemsPage<>(collector,
                     PeertubeParsingHelper.getNextPage(page.getUrl(), total));

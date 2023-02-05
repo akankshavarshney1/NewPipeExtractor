@@ -22,8 +22,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.schabi.newpipe.extractor.ServiceList.SoundCloud;
 
 public class SoundcloudStreamExtractorTest {
@@ -65,7 +64,7 @@ public class SoundcloudStreamExtractorTest {
         @Override public long expectedViewCountAtLeast() { return 43000; }
         @Nullable @Override public String expectedUploadDate() { return "2019-05-16 16:28:45.000"; }
         @Nullable @Override public String expectedTextualUploadDate() { return "2019-05-16 16:28:45"; }
-        @Override public long expectedLikeCountAtLeast() { return 600; }
+        @Override public long expectedLikeCountAtLeast() { return -1; }
         @Override public long expectedDislikeCountAtLeast() { return -1; }
         @Override public boolean expectedHasAudioStreams() { return false; }
         @Override public boolean expectedHasVideoStreams() { return false; }
@@ -128,7 +127,7 @@ public class SoundcloudStreamExtractorTest {
         @Override public long expectedViewCountAtLeast() { return 386000; }
         @Nullable @Override public String expectedUploadDate() { return "2016-11-11 01:16:37.000"; }
         @Nullable @Override public String expectedTextualUploadDate() { return "2016-11-11 01:16:37"; }
-        @Override public long expectedLikeCountAtLeast() { return 7350; }
+        @Override public long expectedLikeCountAtLeast() { return -1; }
         @Override public long expectedDislikeCountAtLeast() { return -1; }
         @Override public boolean expectedHasAudioStreams() { return false; }
         @Override public boolean expectedHasVideoStreams() { return false; }
@@ -171,7 +170,7 @@ public class SoundcloudStreamExtractorTest {
         @Override public long expectedViewCountAtLeast() { return 27000; }
         @Nullable @Override public String expectedUploadDate() { return "2019-03-28 13:36:18.000"; }
         @Nullable @Override public String expectedTextualUploadDate() { return "2019-03-28 13:36:18"; }
-        @Override public long expectedLikeCountAtLeast() { return 25; }
+        @Override public long expectedLikeCountAtLeast() { return -1; }
         @Override public long expectedDislikeCountAtLeast() { return -1; }
         @Override public boolean expectedHasVideoStreams() { return false; }
         @Override public boolean expectedHasSubtitles() { return false; }

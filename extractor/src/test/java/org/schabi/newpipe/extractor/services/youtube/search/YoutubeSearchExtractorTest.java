@@ -271,7 +271,7 @@ public class YoutubeSearchExtractorTest {
                             Description.PLAIN_TEXT),
                     Collections.singletonList(
                             new URL("https://www.who.int/emergencies/diseases/novel-coronavirus-2019")),
-                    Collections.singletonList("Learn more")
+                    Collections.singletonList("LEARN MORE")
             ));
         }
         // testMoreRelatedItems is broken because a video has no duration shown

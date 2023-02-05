@@ -2,12 +2,14 @@ package org.schabi.newpipe.extractor.services.youtube.extractors;
 
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.DISABLE_PRETTY_PRINT_PARAMETER;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.YOUTUBEI_V1_URL;
+import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.addClientInfoHeaders;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.extractPlaylistTypeFromPlaylistUrl;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.fixThumbnailUrl;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getJsonPostResponse;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getKey;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getTextFromObject;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getUrlFromNavigationEndpoint;
+import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getValidJsonResponseBody;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.prepareDesktopJsonBuilder;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
@@ -19,6 +21,7 @@ import com.grack.nanojson.JsonWriter;
 import org.schabi.newpipe.extractor.Page;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.downloader.Downloader;
+import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler;
@@ -29,9 +32,13 @@ import org.schabi.newpipe.extractor.playlist.PlaylistInfo;
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemsCollector;
+import org.schabi.newpipe.extractor.utils.JsonUtils;
 import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -342,9 +349,12 @@ public class YoutubePlaylistExtractor extends PlaylistExtractor {
         }
 
         final StreamInfoItemsCollector collector = new StreamInfoItemsCollector(getServiceId());
+        final Map<String, List<String>> headers = new HashMap<>();
+        addClientInfoHeaders(headers);
 
-        final JsonObject ajaxJson = getJsonPostResponse("browse", page.getBody(),
+        final Response response = getDownloader().post(page.getUrl(), headers, page.getBody(),
                 getExtractorLocalization());
+        final JsonObject ajaxJson = JsonUtils.toJsonObject(getValidJsonResponseBody(response));
 
         final JsonArray continuation = ajaxJson.getArray("onResponseReceivedActions")
                 .getObject(0)
@@ -393,7 +403,12 @@ public class YoutubePlaylistExtractor extends PlaylistExtractor {
                 .map(JsonObject.class::cast)
                 .filter(video -> video.has(PLAYLIST_VIDEO_RENDERER))
                 .map(video -> new YoutubeStreamInfoItemExtractor(
-                        video.getObject(PLAYLIST_VIDEO_RENDERER), timeAgoParser))
+                        video.getObject(PLAYLIST_VIDEO_RENDERER), timeAgoParser) {
+                    @Override
+                    public long getViewCount() {
+                        return -1;
+                    }
+                })
                 .forEachOrdered(collector::commit);
     }
 
